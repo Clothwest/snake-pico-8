@@ -1,0 +1,64 @@
+{
+	"files": [
+		{
+			"path": "main.lua",
+			"bookmarks": [
+				{
+					"line": 71,
+					"column": 0,
+					"label": "snake"
+				},
+				{
+					"line": 164,
+					"column": 0,
+					"label": "debug"
+				},
+				{
+					"line": 199,
+					"column": 0,
+					"label": "food_spawner"
+				},
+				{
+					"line": 281,
+					"column": 0,
+					"label": "first_kind"
+				},
+				{
+					"line": 312,
+					"column": 0,
+					"label": "level"
+				},
+				{
+					"line": 413,
+					"column": 0,
+					"label": "init_func"
+				},
+				{
+					"line": 422,
+					"column": 0,
+					"label": "update_func"
+				},
+				{
+					"line": 438,
+					"column": 0,
+					"label": "draw_func"
+				},
+				{
+					"line": 450,
+					"column": 0,
+					"label": "debug_print"
+				},
+				{
+					"line": 455,
+					"column": 0,
+					"label": "game_manager"
+				},
+				{
+					"line": 467,
+					"column": 0,
+					"label": "tool_func"
+				}
+			]
+		}
+	]
+}

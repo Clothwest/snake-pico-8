@@ -1,5 +1,5 @@
 {
 	"files.associations": {
         "*.lua": "pico-8-lua"
-    }
+	}
 }
