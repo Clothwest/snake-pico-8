@@ -24,37 +24,42 @@
 					"label": "first_kind"
 				},
 				{
-					"line": 312,
+					"line": 310,
+					"column": 7,
+					"label": "card"
+				},
+				{
+					"line": 426,
 					"column": 0,
 					"label": "level"
 				},
 				{
-					"line": 413,
+					"line": 527,
 					"column": 0,
 					"label": "init_func"
 				},
 				{
-					"line": 422,
+					"line": 536,
 					"column": 0,
 					"label": "update_func"
 				},
 				{
-					"line": 438,
+					"line": 566,
 					"column": 0,
 					"label": "draw_func"
 				},
 				{
-					"line": 450,
+					"line": 581,
 					"column": 0,
 					"label": "debug_print"
 				},
 				{
-					"line": 455,
+					"line": 586,
 					"column": 0,
 					"label": "game_manager"
 				},
 				{
-					"line": 467,
+					"line": 598,
 					"column": 0,
 					"label": "tool_func"
 				}

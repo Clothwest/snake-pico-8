@@ -162,11 +162,11 @@ snake = {
 
 
 		-- debug
-		if debug then
-			if btnp(key_dash) then
-				snake.grow()
-			end
-		end
+		-- if debug then
+		-- 	if btnp(key_dash) then
+		-- 		snake.grow()
+		-- 	end
+		-- end
 
 		if snake.can_move and not snake.is_dead then
 			coordinate_copy(snake.dir.buffer, snake.dir)
@@ -223,15 +223,15 @@ food_spawner = {
 		local second = food_spawner.kind.second
 		local third = food_spawner.kind.third
 		while first.cur < first.max do
-			food_spawner.spawn(rnd_weighted(first.types))
+			food_spawner.spawn(rnd_warr(first.types))
 			first.cur += 1
 		end
 		while second.cur < second.max do
-			food_spawner.spawn(rnd_weighted(second.types))
+			food_spawner.spawn(rnd_warr(second.types))
 			second.cur += 1
 		end
 		while third.cur < third.max do
-			food_spawner.spawn(rnd_weighted(third.types))
+			food_spawner.spawn(rnd_warr(third.types))
 			third.cur += 1
 		end
 	end,
@@ -261,7 +261,7 @@ food_spawner = {
 -- food type
 -- 
 -- 
--- mate table for function
+-- mate table for food function
 food_function = {
 	eaten = function(food)
 		del(foods, food)
@@ -308,6 +308,120 @@ add(food_spawner.kind.first.types, score_food)
 -- 
 -- 
 
+-- card
+-- 
+-- 
+-- position
+-- 
+card_pos = {
+	{ x = 20, y = 20 },
+	{ x = 20, y = 50 },
+	{ x = 20, y = 80 }
+}
+
+spr_pos = {
+	{ x = 30, y = 26 },
+	{ x = 30, y = 56 },
+	{ x = 30, y = 86 }
+}
+
+text_pos = {
+	{ x = 45, y = 28 },
+	{ x = 45, y = 58 },
+	{ x = 45, y = 88 }
+}
+-- 
+
+-- size
+-- 
+card_size = { w = 88, h = 20 }
+icon_size = { w = 8, h = 8 }
+-- 
+
+-- border
+border = { thickness = 3, color = c07 }
+
+-- cards
+-- 
+-- meta table for card function
+card_function = {
+	loaded = false,
+	cur = 0,
+	three = {},
+	load = function(fst, snd, trd)
+		add(cards.three, fst or rnd_arr(cards))
+		add(cards.three, snd or rnd_arr(cards))
+		add(cards.three, trd or rnd_arr(cards))
+		cards.loaded = true
+		cards.check(2)
+	end,
+	unload = function()
+		cards.loaded = false
+		clear(cards.three)
+	end,
+	check = function(i)
+		cards.cur = i
+	end,
+	check_up = function()
+		cards.cur = cards.cur == 1 and 3 or cards.cur - 1
+	end,
+	check_down = function(cur)
+		cards.cur = cards.cur == 3 and 1 or cards.cur + 1
+	end,
+	choose = function()
+		cards.three[cards.cur].effect()
+		cards.unload()
+	end,
+	update = function()
+		if btnp(key_up) then
+			cards.check_up()
+		elseif btnp(key_down) then
+			cards.check_down()
+		end
+	end,
+	draw = function()
+		for i = 1, 3, 1 do
+			local card = cards.three[i]
+			local cpos = card_pos[i]
+			local sx = cpos.x
+			local sy = cpos.y
+			local ex = cpos.x + card_size.w
+			local ey = cpos.y + card_size.h
+			rectfill(sx, sy, ex, ey, card.bgc)
+			spr(card.spr, spr_pos[i].x, spr_pos[i].y)
+			print(card.text, text_pos[i].x, text_pos[i].y, c08)
+			local thick = border.thickness
+			if cpos.checking then
+				rect(sx - thick, sy - thick, ex + thick, ey + thick, border.color)
+			end
+		end
+		local cpos = card_pos[cards.cur]
+		local thick = border.thickness
+		local sx = cpos.x - thick
+		local sy = cpos.y - thick
+		local ex = cpos.x + card_size.w + thick
+		local ey = cpos.y + card_size.h + thick
+		rect(sx, sy, ex, ey, border.color)
+	end
+}
+card_function.__index = card_function
+
+cards = {
+	{
+		name = "life",
+		spr = c08,
+		text = "Extra life",
+		bgc = c09,
+		effect = function()
+			sfx(2)
+		end
+	}
+}
+setmetatable(cards, card_function)
+-- 
+-- 
+-- 
+
 -- level
 -- 
 level = {
@@ -332,7 +446,7 @@ level = {
 		},
 		on_food_eaten = function(food)
 			snake.grow()
-			food_spawner.spawn(rnd_weighted(food_spawner.kind.first.types))
+			food_spawner.spawn(rnd_warr(food_spawner.kind.first.types))
 		end,
 		on_snake_died = function()
 			sfx(1)
@@ -431,6 +545,20 @@ function _update()
 			food.type.update(food)
 		end
 	)
+
+	-- card
+	if not cards.loaded then
+		if btnp(key_dash) then
+			cards.load()
+		end
+	else
+		cards.update()
+		if btnp(key_dash) then
+			cards.unload()
+		elseif btnp(key_jump) then
+			cards.choose()
+		end
+	end
 end
 
 --------------------
@@ -446,6 +574,9 @@ function _draw()
 	)
 	snake.draw()
 	print("score: "..score, 1, 1, c09)
+	if cards.loaded then
+		cards.draw()
+	end
 
 	-- 
 	if debug then
@@ -487,6 +618,12 @@ function deep_copy(t)
 	return copy
 end
 
+function clear(t)
+	for k, _ in pairs(t) do
+		t[k] = nil
+	end
+end
+
 function is_empty(t)
 	return next(t) == nil
 end
@@ -499,7 +636,20 @@ function size(t)
 	return cnt
 end
 
-function rnd_equal(t)
+function has(tbl, val)
+	for _, v in pairs(tbl) do
+		if v == val then
+			return true
+		end
+	end
+	return false
+end
+
+function rnd_arr(t)
+	return t[flr(rnd(#t)) + 1]
+end
+
+function rnd_tbl(t)
 	local vals = {}
 	for _, v in pairs(t) do
 		add(vals, v)
@@ -507,7 +657,7 @@ function rnd_equal(t)
 	return vals[flr(rnd(#vals)) + 1]
 end
 
-function rnd_weighted(t)
+function rnd_warr(t)
 	local total = 0
 	for _, v in ipairs(t) do
 		total += v.weight
@@ -520,15 +670,6 @@ function rnd_weighted(t)
 			return v
 		end
 	end
-end
-
-function has(tbl, val)
-	for _, v in pairs(tbl) do
-		if v == val then
-			return true
-		end
-	end
-	return false
 end
 
 -- 
