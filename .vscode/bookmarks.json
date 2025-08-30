@@ -4,62 +4,67 @@
 			"path": "main.lua",
 			"bookmarks": [
 				{
-					"line": 71,
+					"line": 73,
 					"column": 0,
 					"label": "snake"
 				},
 				{
-					"line": 164,
+					"line": 198,
 					"column": 0,
 					"label": "debug"
 				},
 				{
-					"line": 199,
+					"line": 233,
 					"column": 0,
 					"label": "food_spawner"
 				},
 				{
-					"line": 281,
+					"line": 315,
 					"column": 0,
 					"label": "first_kind"
 				},
 				{
-					"line": 310,
-					"column": 7,
-					"label": "card"
+					"line": 447,
+					"column": 0,
+					"label": "cards"
 				},
 				{
-					"line": 426,
+					"line": 474,
 					"column": 0,
 					"label": "level"
 				},
 				{
-					"line": 527,
+					"line": 574,
+					"column": 0,
+					"label": "input"
+				},
+				{
+					"line": 605,
 					"column": 0,
 					"label": "init_func"
 				},
 				{
-					"line": 536,
+					"line": 614,
 					"column": 0,
 					"label": "update_func"
 				},
 				{
-					"line": 566,
+					"line": 643,
 					"column": 0,
 					"label": "draw_func"
 				},
 				{
-					"line": 581,
+					"line": 658,
 					"column": 0,
 					"label": "debug_print"
 				},
 				{
-					"line": 586,
+					"line": 663,
 					"column": 0,
 					"label": "game_manager"
 				},
 				{
-					"line": 598,
+					"line": 675,
 					"column": 0,
 					"label": "tool_func"
 				}

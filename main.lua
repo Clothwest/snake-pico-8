@@ -27,6 +27,7 @@ c14 = 14
 c15 = 15
 
 -- directions
+dir_zero = { x = 0, y = 0 }
 dir_left = { x = -1, y = 0 }
 dir_right = { x = 1, y = 0 }
 dir_up = { x = 0, y = -1 }
@@ -65,7 +66,8 @@ foods = {}
 
 -- for debug output
 debug = true
-bug = 0
+bug1 = 0
+bug2 = 0
 
 -- snake
 -- 
@@ -85,17 +87,43 @@ snake = {
 	die_effect_speed = 15,
 	grow = function()
 		if is_empty(snake.tail) then
-			snake.tail = deep_copy(snake.head)
-			coordinate_copy(snake.head, snake.tail.front)
-			snake.tail.prev = snake.head
-			snake.tail.spr = c03
+			local head = snake.head
+			local tail = snake.tail
+
+			-- coordinate
+			coordinate_copy(head, tail)
+
+			-- front
+			tail.front = new_coordinate(head)
+
+			-- spr
+			tail.spr = c03
+
+			-- prev
+			tail.prev = head
+
+			head.next = tail
 			add(snake.parts, snake.tail)
 		else
-			local new_body = deep_copy(snake.tail)
-			new_body.prev = snake.tail.prev
-			add(snake.parts, new_body)
-			coordinate_copy(new_body, snake.tail.front)
-			snake.tail.prev = new_body
+			local body = {}
+			local tail = snake.tail
+
+			-- coordinate
+			coordinate_copy(tail, body)
+
+			-- front
+			body.front = new_coordinate(tail)
+
+			-- spr
+			body.spr = tail.spr
+
+			-- prev and next
+			body.prev = tail.prev
+			body.next = tail
+
+			tail.prev.next = body
+			tail.prev = body
+			add(snake.parts, body)
 		end
 	end,
 	die = function()
@@ -106,10 +134,10 @@ snake = {
 		if frame % (fps \ snake.die_effect_speed) ~= 0 then
 			return
 		end
-		if next(snake.dead_part) == nil then
-			snake.dead_part = snake.tail
-		elseif snake.dead_part.prev ~= nil then
-			snake.dead_part = snake.dead_part.prev
+		if is_empty(snake.dead_part) then
+			snake.dead_part = snake.head
+		elseif snake.dead_part.next ~= nil then
+			snake.dead_part = snake.dead_part.next
 		end
 		snake.dead_part.spr = c14
 		if snake.dead_part.prev == nil then
@@ -141,6 +169,21 @@ snake = {
 			end
 		)
 	end,
+	handle_dir = function()
+		local sdir = snake.dir
+		local dir = { x = 0, y = 0 }
+
+		-- only not zero can change direction
+		-- for starter, this needs to copy both
+		if not (overlap(sdir, dir_left) or overlap(sdir, dir_right)) then
+			coordinate_add(dir, input.pressed(key_left) and dir_left, input.pressed(key_right) and dir_right)
+		end
+		coordinate_copy(is_origin(dir) and sdir.buffer or dir, sdir.buffer)
+		if not (overlap(sdir, dir_up) or overlap(sdir, dir_down)) then
+			coordinate_add(dir, input.pressed(key_up) and dir_up, input.pressed(key_down) and dir_down)
+		end
+		coordinate_copy(is_origin(dir) and sdir.buffer or dir, sdir.buffer)
+	end,
 	init = function()
 		add(snake.parts, snake.head)
 	end,
@@ -150,16 +193,7 @@ snake = {
 		else
 			snake.can_move = false
 		end
-		if not overlap(snake.dir, dir_left) and btnp(key_right) then
-			coordinate_copy(dir_right, snake.dir.buffer)
-		elseif not overlap(snake.dir, dir_right) and btnp(key_left) then
-			coordinate_copy(dir_left, snake.dir.buffer)
-		elseif not overlap(snake.dir, dir_up) and btnp(key_down) then
-			coordinate_copy(dir_down, snake.dir.buffer)
-		elseif not overlap(snake.dir, dir_down) and btnp(key_up) then
-			coordinate_copy(dir_up, snake.dir.buffer)
-		end
-
+		snake.handle_dir()
 
 		-- debug
 		-- if debug then
@@ -169,7 +203,7 @@ snake = {
 		-- end
 
 		if snake.can_move and not snake.is_dead then
-			coordinate_copy(snake.dir.buffer, snake.dir)
+			coordinate_copy(is_origin(snake.dir.buffer) and snake.dir or snake.dir.buffer, snake.dir)
 			snake.move()
 		elseif snake.is_dead then
 			snake.die_effect()
@@ -349,6 +383,7 @@ card_function = {
 	cur = 0,
 	three = {},
 	load = function(fst, snd, trd)
+		tick = false
 		add(cards.three, fst or rnd_arr(cards))
 		add(cards.three, snd or rnd_arr(cards))
 		add(cards.three, trd or rnd_arr(cards))
@@ -358,6 +393,7 @@ card_function = {
 	unload = function()
 		cards.loaded = false
 		clear(cards.three)
+		tick = true
 	end,
 	check = function(i)
 		cards.cur = i
@@ -373,10 +409,13 @@ card_function = {
 		cards.unload()
 	end,
 	update = function()
-		if btnp(key_up) then
+		if input.just_pressed(key_up) then
 			cards.check_up()
-		elseif btnp(key_down) then
+		elseif input.just_pressed(key_down) then
 			cards.check_down()
+		end
+		if input.just_pressed(key_jump) then
+			cards.choose()
 		end
 	end,
 	draw = function()
@@ -410,10 +449,19 @@ cards = {
 	{
 		name = "life",
 		spr = c08,
-		text = "Extra life",
+		text = "bite yourself",
 		bgc = c09,
 		effect = function()
 			sfx(2)
+		end
+	},
+	{
+		name = "1",
+		spr = c01,
+		text = "some random word",
+		bgc = c12,
+		effect = function()
+			sfx(0)
 		end
 	}
 }
@@ -522,6 +570,36 @@ level = {
 }
 -- 
 
+-- input
+-- 
+input = {
+	[key_left] = false,
+	[key_right] = false,
+	[key_up] = false,
+	[key_down] = false,
+	[key_jump] = false,
+	[key_dash] = false,
+	clear = function()
+		for i = 0, 5, 1 do
+			input[i] = false
+		end
+	end,
+	pressed = function(key)
+		if not input[key] and btn(key) then
+			input[key] = true
+			return true
+		end
+		return false
+	end,
+	just_pressed = function(key)
+		if not input[key] and btnp(key) then
+			input[key] = true
+			return true
+		end
+		return false
+	end
+}
+
 --------------------
 -- init function --
 --------------------
@@ -535,28 +613,27 @@ end
 -- update function --
 --------------------
 function _update()
+	input.clear()
 	if tick then
 		frame = (frame + 1) % fps
+		snake.update()
+		foreach(
+			foods,
+			function(food)
+				food.type.update(food)
+			end
+		)
 	end
-	snake.update()
-	foreach(
-		foods,
-		function(food)
-			food.type.update(food)
-		end
-	)
 
 	-- card
 	if not cards.loaded then
-		if btnp(key_dash) then
+		if input.just_pressed(key_dash) then
 			cards.load()
 		end
 	else
 		cards.update()
-		if btnp(key_dash) then
+		if input.just_pressed(key_dash) then
 			cards.unload()
-		elseif btnp(key_jump) then
-			cards.choose()
 		end
 	end
 end
@@ -578,13 +655,13 @@ function _draw()
 		cards.draw()
 	end
 
-	-- 
+	-- debug
 	if debug then
-		print("debug "..bug, 1, 122, c08)
+		print("debug "..bug1..bug2, 1, 122, c08)
 	end
 end
 
--- game manager
+-- game manager function
 -- 
 function init()
 	load_level(lv_peaceful)
@@ -674,9 +751,38 @@ end
 
 -- 
 
+function new_coordinate(x, y)
+	local new = {}
+	if type(x) == "table" then
+		coordinate_copy(x, new)
+	else
+		new.x = x or 0
+		new.y = y or 0
+	end
+	return new
+end
+
 function coordinate_copy(from, to)
 	to.x = from.x
 	to.y = from.y
+end
+
+function coordinate_add(target, first, second)
+	first = clamp_dir(first)
+	second = clamp_dir(second)
+	target.x = first.x + second.x
+	target.y = first.y + second.y
+end
+
+function is_origin(point)
+	return (point.x == 0) and (point.y == 0)
+end
+
+function clamp_dir(dir)
+	if not (type(dir) == "table") or dir.x == nil or dir.y == nil then
+		dir = dir_zero
+	end
+	return dir
 end
 
 function to_tile(v)
